@@ -54,14 +54,20 @@ def read_key(filename):
     return n, exponent
 
 def encrypt(message, e, n):
-    m = int.from_bytes(message.encode(), 'big')
-    return pow(m, e, n)
+    return pow(message, e, n)
 
 def decrypt(encryptedMessage, d, n):
     m = pow(encryptedMessage, d, n)
     message = m.to_bytes((m.bit_length() + 7) // 8, "big").decode("utf-8")
     return message
 
+def fileCipher():
+    message: bytes
+    path = input("Write file path: ")
+    with open(path, "rb") as file:
+        message = file.read()
+    message = int.from_bytes(message, 'big')
+    return message
 
 def menu():
     print(
@@ -83,17 +89,27 @@ def menu():
     
     match menuInput:
         case 1: 
-            messageInput = (input("Write a message: "))
+            message = fileCipher()
             n, e = read_key(public_key)
-            encrypted = encrypt(messageInput, e, n)
+            encrypted = encrypt(message, e, n)
+            encrypted = encrypted.to_bytes((encrypted.bit_length() + 7) // 8, 'big')
             print(f"encrypted message: {encrypted}")
+            with open("encrypted.txt", "wb") as enc_message:
+                enc_message.write(encrypted)
             menu()
         case 2:
-            messageInput = int(input("Write a message: "))
-            n, e = read_key(private_key)
-            decrypted = decrypt(messageInput, e, n)
-            print(f"decrypted message: {decrypted}")
-            menu()
+            try:
+                message = fileCipher()
+                n, e = read_key(private_key)
+                decrypted = decrypt(message, e, n)
+                print(f"decrypted message: {decrypted}")
+                with open("decrypted.txt", "w") as dec_message:
+                    dec_message.write(f"{decrypted}\n")
+                menu()
+            except ValueError:
+                print("Invalid decrypt input. Enter a number!")
+                menu()
+                return
         case 3:
             generateKeys()
             menu()
